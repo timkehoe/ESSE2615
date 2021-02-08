@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Directions WebApp</title>
+
+    <!--Referencing the CSS file called "main"-->
+    <link rel="stylesheet" href="main.css">
+
+    <!--Source for APIs-->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+    <script
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDSp6JQiKoe84kUZIeTztM4ZDNyoVlaSTI&callback=initMap&libraries=&v=weekly"
+        defer></script>
+ 
+
+    <script>
+                
+        // map functionality
+        function initMap() {
+            const directionsService = new google.maps.DirectionsService();
+            const directionsRenderer = new google.maps.DirectionsRenderer();
+
+            const map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 10,
+                center: { lat: 43.7742762, lng: -79.5041315 },
+            });
+
+            // creating a button that will find user' lat and long. Set them to zero initially.
+            infoWindow = new google.maps.InfoWindow();
+            var locationButton = document.createElement("button");
+            locationButton.textContent = "Click here to find your location";
+            locationButton.classList.add("custom-map-control-button");
+            var userLat = 0;
+            var userLong = 0;
+            
+            // finding the user's location and updating lat and long coordinates, then showing on the map
+            map.controls[google.maps.ControlPosition.TOP_CENTER].push(locationButton);
+            locationButton.addEventListener("click", () => {
+                // if browser supports geolocation (and the user allows it)
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            var pos = {
+                                lat: position.coords.latitude,
+                                lng: position.coords.longitude,
+                            };
+                            userLat = pos.lat;
+                            userLong = pos.lng;
+                            infoWindow.setPosition(pos);
+                            infoWindow.setContent("You are here (" + userLat + ", " + userLong + ")");
+                            infoWindow.open(map);
+                            map.setCenter(pos);
+                        },
+                        () => {
+                            handleLocationError(true, infoWindow,
+                                map.getCenter());
+                        }
+                    );
+                } else {
+                    // Browser doesn't support Geolocation
+                    handleLocationError(false, infoWindow, map.getCenter());
+                }
+            });
+
+            // calling the onChangeHanlder function and using the Directions API to display a route with the user's position as the origin.
+            directionsRenderer.setMap(map);
+            onChangeHandler = function () {
+                calculateAndDisplayRoute(directionsService, directionsRenderer, userLat, userLong);
+            };
+    
+            document.getElementById("end").addEventListener("change", onChangeHandler);
+        }
+
+        // defining the routing function
+        function calculateAndDisplayRoute(directionsService, directionsRenderer, latitude, longitude) {
+            directionsService.route(
+                {
+                    // setting the origin as the user's location
+                    origin: {lat:latitude, lng:longitude},
+                     
+                    // querying the selected destination option
+                    destination: {
+                        query: document.getElementById("end").value,
+                    },
+                    
+                    // setting the travel mode to WALKING
+                    travelMode: google.maps.TravelMode.WALKING,
+                },
+                // if there is sufficient data for the routing function, it will run. If not, it will display the status
+                (response, status) => {
+                    if (status === "OK") {
+                        directionsRenderer.setDirections(response);
+                    } else {
+                        window.alert("Directions request failed due to " + status);
+                    }
+                }
+            );
+        }
+    </script>
+
+</head>
+
+<body>
+<h1>GTA Shelter Locator</h1>
+
+<!--Collapsable help window button created and filled with text-->
+    <button type="button" class="collapsible">Help</button>
+    <div class="content">
+        <p>How a user would interact with this app: <br> <br>Theoretically, all destinations in the drop down menu will be homeless shelters that are not at full capacity. 
+            Users that are interested in finding the quickest walking directions to a shelter on the list would follow these steps: <br><br>
+            Step 1: Find their location using the "Click here to find your location" button. <br> Step 2: Select a destination.<br><br>
+            This process can be repeated to update directions based on the user's location at any time. <br> Note: Future improvements to the 
+            app would allow users to find directions to shelters that are both under capacity AND closest to their location.
+    </button></p>
+    </div>
+    <!--script to allow the help window will be toggled on and off by clicking it. Reference: https://www.w3schools.com/howto/howto_js_collapsible.asp-->
+    <script>
+        var coll = document.getElementsByClassName("collapsible");
+        var i;
+
+         for (i = 0; i < coll.length; i++) {
+            coll[i].addEventListener("click", function () {
+                this.classList.toggle("active");
+                var content = this.nextElementSibling;
+                if (content.style.display === "block") {
+                    content.style.display = "none";
+                } else {
+                    content.style.display = "block";
+                }
+            });
+        }
+    </script>
+
+   <p> </p>
+   <!--Destination options-->
+    <div>
+        <b>Destinations: </b>
+        <select id="end">
+            <!-- <option value="m3j1p3">York University</option> -->
+            <!-- <option value="250 Cook Road, Toronto, ON">Home</option>
+            <option value="m5v3l9">CN Tower</option>
+            <option value="l5p1b2">Pearson Airport</option> -->
+            <option value="425 Adelaide St W, Toronto, ON">Eva's Initiatives For Homeless Youth</option>
+            <option value="20 Gerrard St E, Toronto, ON">Covenant House Toronto</option>
+            <option value="21 Carlaw Ave, Toronto, ON">Red Door Family Shelter</option>
+            <option value="6 Warrendale Crt, Etobicoke, ON">Youth Without Shelter</option>
+            <option value="525 Bloor St E, Toronto, ON">St Simon's Shelter</option>
+            <option value="412 Queen St E, Toronto, ON">Good Shepherd Ministries</option>-->
+
+        </select>
+    </div>
+    <div id="map"></div>
+
+</body>
+
+</html>
